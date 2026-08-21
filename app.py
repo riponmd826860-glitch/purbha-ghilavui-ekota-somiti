@@ -109,6 +109,10 @@ def layout(body,title=''):
 def guard():
  if not me(): return redirect('/login')
  return None
+@app.route("/logo.jpg")
+def logo():
+    return send_from_directory(app.root_path, "logo.jpg")
+
 @app.route('/login',methods=['GET','POST'])
 def login():
  if request.method=='POST':
@@ -127,7 +131,7 @@ def login():
 .primary{width:100%;padding:13px;border:0;border-radius:11px;background:#1f7a5a;color:#fff;font-size:16px;font-weight:700;cursor:pointer}
 </style>
 <div class="login"><form class="box" method="post">
-<img class="logo" src="/static/logo.jpg" alt="সমিতির লোগো">
+<img class="logo" src="/logo.jpg" alt="সমিতির লোগো">
 <div class="title">'''+settings()['name']+'''</div>
 <div class="field"><label>ইউজারনেম</label><input name="username" autocomplete="username" required></div>
 <div class="field"><label>পাসওয়ার্ড</label><input name="password" type="password" autocomplete="current-password" required></div>
