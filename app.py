@@ -1,18 +1,100 @@
-import os,sqlite3,secrets
-from datetime import date,datetime
-from flask import Flask,request,session,redirect,url_for,render_template_string,flash,send_from_directory
-from werkzeug.security import generate_password_hash,check_password_hash
+import os, secrets
+from datetime import date, datetime
+from flask import Flask, request, session, redirect, url_for, render_template_string, flash, send_from_directory
+from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-BASE=os.path.dirname(__file__); DB=os.path.join(BASE,'somobay.db'); UP=os.path.join(BASE,'uploads'); os.makedirs(UP,exist_ok=True)
-app=Flask(__name__); app.secret_key=os.environ.get('SECRET_KEY',secrets.token_hex(32)); app.config['MAX_CONTENT_LENGTH']=5*1024*1024
 
-def db(): c=sqlite3.connect(DB); c.row_factory=sqlite3.Row; return c
+BASE = os.path.dirname(__file__)
+DB = os.path.join(BASE, 'somobay.db')
+UP = os.path.join(BASE, 'uploads')
+os.makedirs(UP, exist_ok=True)
+
+app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(32))
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+    SESSION_COOKIE_SECURE=bool(os.environ.get('RENDER')),
+)
+
+DATABASE_URL = os.environ.get('DATABASE_URL', '').strip()
+USE_POSTGRES = bool(DATABASE_URL)
+
+class DBConn:
+    def __init__(self):
+        self.pg = None
+        self.cur = None
+        self.sqlite = None
+        if USE_POSTGRES:
+            import psycopg
+            from psycopg.rows import dict_row
+            url = DATABASE_URL
+            if url.startswith('postgres://'):
+                url = 'postgresql://' + url[len('postgres://'):]
+            self.pg = psycopg.connect(url, connect_timeout=15, row_factory=dict_row)
+            self.cur = self.pg.cursor()
+        else:
+            import sqlite3
+            self.sqlite = sqlite3.connect(DB)
+            self.sqlite.row_factory = sqlite3.Row
+
+    def _sql(self, sql):
+        return sql.replace('?', '%s') if USE_POSTGRES else sql
+
+    def execute(self, sql, params=()):
+        if USE_POSTGRES:
+            return self.cur.execute(self._sql(sql), params)
+        return self.sqlite.execute(sql, params)
+
+    def executescript(self, sql):
+        if USE_POSTGRES:
+            for stmt in [x.strip() for x in sql.split(';') if x.strip()]:
+                self.cur.execute(stmt)
+        else:
+            self.sqlite.executescript(sql)
+
+    def commit(self):
+        (self.pg or self.sqlite).commit()
+
+    def close(self):
+        if self.cur:
+            self.cur.close()
+        if self.pg:
+            self.pg.close()
+        if self.sqlite:
+            self.sqlite.close()
+
+def db():
+    return DBConn()
+
 def init():
- c=db(); c.executescript('''CREATE TABLE IF NOT EXISTS settings(id INTEGER PRIMARY KEY,name TEXT,monthly REAL);CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY AUTOINCREMENT,member_id TEXT UNIQUE,name TEXT,phone TEXT,nid TEXT,photo TEXT,username TEXT UNIQUE,password TEXT,role TEXT,status TEXT,joining TEXT);CREATE TABLE IF NOT EXISTS deposits(id INTEGER PRIMARY KEY AUTOINCREMENT,member_id INTEGER,month TEXT,amount REAL,date TEXT,method TEXT,note TEXT);CREATE TABLE IF NOT EXISTS withdrawals(id INTEGER PRIMARY KEY AUTOINCREMENT,member_id INTEGER,amount REAL,date TEXT,reason TEXT);CREATE TABLE IF NOT EXISTS logs(id INTEGER PRIMARY KEY AUTOINCREMENT,action TEXT,target TEXT,at TEXT);''')
- if not c.execute('select 1 from settings').fetchone(): c.execute('insert into settings values(1,?,?)',('পূর্ব ঘিলাভুই যুব একতা সমবায় সমিতি',1000))
- if not c.execute("select 1 from users where username='admin'").fetchone(): c.execute('insert into users(member_id,name,username,password,role,status,joining) values(?,?,?,?,?,?,?)',('ADMIN','সমিতির Admin','admin',generate_password_hash('admin123'),'admin','Active',str(date.today())))
- c.commit();c.close()
+    c = db()
+    if USE_POSTGRES:
+        c.executescript('''
+        CREATE TABLE IF NOT EXISTS settings(id INTEGER PRIMARY KEY,name TEXT NOT NULL,monthly DOUBLE PRECISION NOT NULL);
+        CREATE TABLE IF NOT EXISTS users(id SERIAL PRIMARY KEY,member_id TEXT UNIQUE,name TEXT,phone TEXT,nid TEXT,photo TEXT,username TEXT UNIQUE,password TEXT,role TEXT,status TEXT,joining TEXT);
+        CREATE TABLE IF NOT EXISTS deposits(id SERIAL PRIMARY KEY,member_id INTEGER REFERENCES users(id) ON DELETE CASCADE,month TEXT,amount DOUBLE PRECISION,date TEXT,method TEXT,note TEXT);
+        CREATE TABLE IF NOT EXISTS withdrawals(id SERIAL PRIMARY KEY,member_id INTEGER REFERENCES users(id) ON DELETE CASCADE,amount DOUBLE PRECISION,date TEXT,reason TEXT);
+        CREATE TABLE IF NOT EXISTS logs(id SERIAL PRIMARY KEY,action TEXT,target TEXT,at TEXT);
+        ''')
+    else:
+        c.executescript('''
+        CREATE TABLE IF NOT EXISTS settings(id INTEGER PRIMARY KEY,name TEXT,monthly REAL);
+        CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY AUTOINCREMENT,member_id TEXT UNIQUE,name TEXT,phone TEXT,nid TEXT,photo TEXT,username TEXT UNIQUE,password TEXT,role TEXT,status TEXT,joining TEXT);
+        CREATE TABLE IF NOT EXISTS deposits(id INTEGER PRIMARY KEY AUTOINCREMENT,member_id INTEGER,month TEXT,amount REAL,date TEXT,method TEXT,note TEXT);
+        CREATE TABLE IF NOT EXISTS withdrawals(id INTEGER PRIMARY KEY AUTOINCREMENT,member_id INTEGER,amount REAL,date TEXT,reason TEXT);
+        CREATE TABLE IF NOT EXISTS logs(id INTEGER PRIMARY KEY AUTOINCREMENT,action TEXT,target TEXT,at TEXT);
+        ''')
+    if not c.execute('select 1 from settings').fetchone():
+        c.execute('insert into settings values(1,?,?)', ('পূর্ব ঘিলাভুই যুব একতা সমবায় সমিতি', 1000))
+    if not c.execute("select 1 from users where username='admin'").fetchone():
+        c.execute('insert into users(member_id,name,username,password,role,status,joining) values(?,?,?,?,?,?,?)',
+                  ('ADMIN','সমিতির Admin','admin',generate_password_hash('admin123'),'admin','Active',str(date.today())))
+    c.commit(); c.close()
+
 init()
+
 def me():
  if not session.get('uid'): return None
  c=db(); x=c.execute('select * from users where id=?',(session['uid'],)).fetchone();c.close();return x
@@ -33,7 +115,24 @@ def login():
   c=db();u=c.execute('select * from users where username=?',(request.form['username'].strip(),)).fetchone();c.close()
   if u and u['status']=='Active' and check_password_hash(u['password'],request.form['password']): session['uid']=u['id'];return redirect('/')
   flash('Login তথ্য ভুল')
- return '''<div class="login"><form class="box" method="post"><h2>'''+settings()['name']+'''</h2><div class="field"><label>Username / Member ID</label><input name="username" required></div><div class="field"><label>Password</label><input name="password" type="password" required></div><button class="primary" style="width:100%">LOGIN</button><p class="muted">Admin demo: admin / admin123</p></form></div>'''
+ return '''<!doctype html><html lang="bn"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'''+settings()['name']+'''</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,sans-serif}
+.login{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#17324d,#287b63);padding:20px}
+.box{background:#fff;padding:30px;border-radius:22px;width:min(430px,94%);box-shadow:0 18px 50px #0004;text-align:center}
+.logo{width:min(210px,60vw);height:min(210px,60vw);object-fit:contain;margin:0 auto 12px;display:block}
+.title{font-size:22px;font-weight:800;color:#17324d;line-height:1.45;margin:8px 0 22px}
+.field{text-align:left;margin:14px 0}.field label{display:block;font-size:14px;font-weight:700;margin-bottom:7px;color:#344054}
+.field input{width:100%;padding:13px;border:1px solid #d5dce6;border-radius:11px;font-size:16px}
+.primary{width:100%;padding:13px;border:0;border-radius:11px;background:#1f7a5a;color:#fff;font-size:16px;font-weight:700;cursor:pointer}
+</style>
+<div class="login"><form class="box" method="post">
+<img class="logo" src="/static/logo.jpg" alt="সমিতির লোগো">
+<div class="title">'''+settings()['name']+'''</div>
+<div class="field"><label>ইউজারনেম</label><input name="username" autocomplete="username" required></div>
+<div class="field"><label>পাসওয়ার্ড</label><input name="password" type="password" autocomplete="current-password" required></div>
+<button class="primary" type="submit">লগইন</button>
+</form></div></html>'''
 @app.route('/logout')
 def logout(): session.clear();return redirect('/login')
 @app.route('/')
@@ -70,7 +169,7 @@ def new_member():
    photo=secrets.token_hex(10)+'.'+ext;f.save(os.path.join(UP,photo))
   try:
    c=db();c.execute('insert into users(member_id,name,phone,nid,photo,username,password,role,status,joining) values(?,?,?,?,?,?,?,?,?,?)',(request.form['member_id'],request.form['name'],request.form.get('phone',''),request.form.get('nid',''),photo,request.form['username'],generate_password_hash(request.form['password']),'member',request.form['status'],request.form['joining']));c.commit();c.close();return redirect('/members')
-  except sqlite3.IntegrityError:return 'Member ID or Username already exists',409
+  except Exception:return 'Member ID or Username already exists',409
  return form_page()
 @app.route('/members/<int:i>')
 def view_member(i):
@@ -151,4 +250,4 @@ def my_account():
  u=me();c=db();d=c.execute('select * from deposits where member_id=? order by id desc',(u['id'],)).fetchall();w=c.execute('select * from withdrawals where member_id=? order by id desc',(u['id'],)).fetchall();c.close();return layout(f'''<div class="panel">{('<img class=avatar src="/uploads/'+u['photo']+'">') if u['photo'] else ''}<p><b>নাম:</b> {u['name']}</p><p><b>Member ID:</b> {u['member_id']}</p><p><b>NID:</b> {u['nid'] or '—'}</p><p><b>মোবাইল:</b> {u['phone'] or '—'}</p></div><div class="panel"><h3>আমার জমা</h3><table class="table"><tr><th>মাস</th><th>পরিমাণ</th><th>তারিখ</th></tr>'''+''.join(f'<tr><td>{x["month"]}</td><td>৳{x["amount"]}</td><td>{x["date"]}</td></tr>' for x in d)+'''</table></div>''','My Account')
 @app.route('/uploads/<name>')
 def uploads(name):return send_from_directory(UP,secure_filename(name))
-if __name__=='__main__':app.run(host='0.0.0.0',port=int(os.environ.get('PORT',5000)))
+if __name__=='__main__':app.run(host='127.0.0.1',port=int(os.environ.get('PORT',5000)))
