@@ -113,6 +113,47 @@ def guard():
 def logo():
     return send_from_directory(app.root_path, "logo.jpg")
 
+@app.route('/setup-admin', methods=['GET', 'POST'])
+def setup_admin():
+    """One-time admin password setup. Requires SETUP_ADMIN_TOKEN in Render."""
+    if session.get('uid'):
+        return 'Already logged in. Logout first if you need setup.', 403
+
+    setup_token = os.environ.get('SETUP_ADMIN_TOKEN', '').strip()
+    if not setup_token:
+        return 'Not found', 404
+
+    if request.method == 'POST':
+        if not secrets.compare_digest(request.form.get('setup_token', ''), setup_token):
+            return 'Invalid setup token', 403
+
+        username = request.form.get('username', 'admin').strip()
+        password = request.form.get('password', '')
+        if not username or len(password) < 8:
+            return 'Username is required and password must be at least 8 characters.', 400
+
+        c = db()
+        try:
+            user = c.execute('select id from users where username=?', (username,)).fetchone()
+            if not user:
+                c.execute(
+                    'insert into users(member_id,name,username,password,role,status,joining) values(?,?,?,?,?,?,?)',
+                    ('ADMIN', 'সমিতির Admin', username, generate_password_hash(password), 'admin', 'Active', str(date.today()))
+                )
+            else:
+                c.execute(
+                    'update users set password=?, role=?, status=? where username=?',
+                    (generate_password_hash(password), 'admin', 'Active', username)
+                )
+            c.commit()
+        finally:
+            c.close()
+        return 'Admin password updated securely. Remove SETUP_ADMIN_TOKEN from Render Environment now, then open /login.'
+
+    return """<!doctype html><html lang='bn'><meta name='viewport' content='width=device-width,initial-scale=1'>
+<title>Admin Setup</title><style>body{font-family:system-ui;background:#f4f7fb;padding:30px}.box{max-width:420px;margin:auto;background:#fff;padding:24px;border-radius:16px}.field{margin:14px 0}.field label{display:block;margin-bottom:6px}.field input{width:100%;padding:11px;border:1px solid #ccd4df;border-radius:9px;box-sizing:border-box}button{padding:11px 16px;border:0;border-radius:9px;background:#1f7a5a;color:#fff;font-weight:700}</style>
+<div class='box'><h2>Admin Password Setup</h2><form method='post'><div class='field'><label>Setup Token</label><input name='setup_token' type='password' required></div><div class='field'><label>Username</label><input name='username' value='admin' required></div><div class='field'><label>New Password</label><input name='password' type='password' minlength='8' required></div><button>Save Securely</button></form></div></html>"""
+
 @app.route('/login',methods=['GET','POST'])
 def login():
  if request.method=='POST':
