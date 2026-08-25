@@ -195,7 +195,7 @@ def signed_url(path, expires=900):
 
 
 def svg_icon(name):
-    """Return a dependency-free icon character that renders reliably on mobile browsers."""
+    """Return a simple browser-safe symbol; CSS supplies the color."""
     icons = {
         "dashboard": "▦",
         "members": "♟",
@@ -213,7 +213,7 @@ def svg_icon(name):
 
 def nav_link(href, label, icon_name, badge=0):
     badge_html = f'<span class="nav-badge">{badge}</span>' if badge else ""
-    return f'<a class="nav-link" href="{href}"><span class="nav-icon">{svg_icon(icon_name)}</span><span class="nav-label">{label}</span>{badge_html}</a>'
+    return f'<a class="nav-link" href="{href}"><span class="nav-icon icon-{icon_name}">{svg_icon(icon_name)}</span><span class="nav-label">{label}</span>{badge_html}</a>'
 
 
 def layout(body, title=""):
@@ -241,7 +241,7 @@ def layout(body, title=""):
     if u:
         nav += nav_link("/logout", "লগআউট", "logout")
     return f'''<!doctype html><html lang="bn"><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>{s["name"]}</title><style>
-*{{box-sizing:border-box}}body{{margin:0;font-family:system-ui,-apple-system,sans-serif;background:#f4f7fb;color:#172033}}.side{{position:fixed;inset:0 auto 0 0;width:235px;background:#17324d;color:#fff;padding:14px 10px;z-index:10}}.brand{{font-weight:800;line-height:1.4;margin:2px 8px 20px;display:flex;align-items:center;gap:10px}}.brand-logo{{width:46px;height:46px;object-fit:contain;border-radius:50%;background:#fff}}.brand-name{{font-size:15px}}.nav-link{{display:flex;align-items:center;gap:12px;color:#dce7f2;text-decoration:none;padding:11px 12px;margin:5px 0;border-radius:10px;min-height:46px}}.nav-link:hover{{background:#274966;color:#fff}}.nav-icon{{width:30px;height:30px;min-width:30px;display:flex;align-items:center;justify-content:center;flex:none;font-size:23px;font-weight:800;line-height:1;color:#fff;font-family:"Segoe UI Symbol","Noto Sans Symbols",sans-serif}}.nav-label{{font-size:15px;font-weight:600}}.nav-badge{{margin-left:auto;background:#d83b3b;color:#fff;border-radius:99px;padding:2px 7px;font-size:11px}}.main{{margin-left:235px;padding:24px;max-width:1500px}}.cards{{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}}.card,.panel{{background:#fff;border-radius:15px;padding:18px;box-shadow:0 3px 15px #17203312;margin-top:16px}}.big{{font-size:25px;font-weight:800}}.muted{{color:#6d7787;font-size:13px}}.btn,button{{display:inline-block;padding:9px 13px;border:0;border-radius:9px;text-decoration:none;background:#e8eef5;color:#172033;cursor:pointer}}.primary{{background:#1f7a5a;color:#fff}}.danger{{background:#d83b3b;color:#fff}}.grid{{display:grid;grid-template-columns:1fr 1fr;gap:14px}}.field{{margin:12px 0}}.field label{{display:block;font-size:13px;margin-bottom:5px}}.field input,.field select{{width:100%;padding:10px;border:1px solid #d5dce6;border-radius:9px}}.table{{width:100%;border-collapse:collapse}}.table th,.table td{{padding:10px;border-bottom:1px solid #edf0f4;text-align:left}}.badge{{padding:5px 8px;border-radius:99px;font-size:12px}}.ok{{background:#dcfce7;color:#166534}}.bad{{background:#fee2e2;color:#991b1b}}.warn{{background:#fef3c7;color:#92400e}}.avatar{{width:85px;height:85px;object-fit:cover;border-radius:13px}}.notice{{padding:12px 14px;border-radius:10px;background:#eef6ff;margin:12px 0}}.upload-preview{{max-width:420px;width:100%;border-radius:12px;border:1px solid #e4e8ee}}.login{{min-height:100vh;display:grid;place-items:center;background:linear-gradient(135deg,#17324d,#287b63);padding:20px}}.box{{background:#fff;padding:28px;border-radius:18px;width:min(430px,94%);box-shadow:0 18px 50px #0004}}.logo{{width:min(210px,60vw);height:min(210px,60vw);object-fit:contain;margin:0 auto 12px;display:block}}.title{{font-size:22px;font-weight:800;color:#17324d;line-height:1.45;margin:8px 0 22px}}@media(max-width:800px){{.side{{width:72px;padding:10px 7px}}.brand{{margin:2px 0 18px;justify-content:center}}.brand-logo{{width:50px;height:50px}}.brand-name,.nav-label{{display:none}}.nav-link{{justify-content:center;padding:10px 4px;margin:6px 0}}.nav-badge{{position:absolute;margin:0 0 28px 32px}}.main{{margin-left:72px;padding:15px}}.cards{{grid-template-columns:1fr 1fr}}.grid{{grid-template-columns:1fr}}.table{{font-size:13px;display:block;overflow-x:auto;white-space:nowrap}}}}@media(max-width:480px){{.cards{{grid-template-columns:1fr}}}}
+*{{box-sizing:border-box}}body{{margin:0;font-family:system-ui,-apple-system,sans-serif;background:#f4f7fb;color:#172033}}.side{{position:fixed;inset:0 auto 0 0;width:235px;background:#17324d;color:#fff;padding:14px 10px;z-index:10}}.brand{{font-weight:800;line-height:1.4;margin:2px 8px 20px;display:flex;align-items:center;gap:10px}}.brand-logo{{width:46px;height:46px;object-fit:contain;border-radius:50%;background:#fff}}.brand-name{{font-size:15px}}.nav-link{{display:flex;align-items:center;gap:12px;color:#dce7f2;text-decoration:none;padding:11px 12px;margin:5px 0;border-radius:10px;min-height:46px}}.nav-link:hover{{background:#274966;color:#fff}}.nav-icon{{width:30px;height:30px;min-width:30px;display:flex;align-items:center;justify-content:center;flex:none;font-size:23px;font-weight:900;line-height:1;font-family:"Segoe UI Symbol","Noto Sans Symbols",sans-serif;text-shadow:0 1px 1px #0004}}.icon-dashboard{{color:#60a5fa}}.icon-members{{color:#34d399}}.icon-calendar{{color:#c084fc}}.icon-payment{{color:#fbbf24}}.icon-report{{color:#22d3ee}}.icon-audit{{color:#f472b6}}.icon-settings{{color:#cbd5e1}}.icon-home{{color:#60a5fa}}.icon-account{{color:#34d399}}.icon-logout{{color:#fb7185}}.nav-label{{font-size:15px;font-weight:600}}.nav-badge{{margin-left:auto;background:#d83b3b;color:#fff;border-radius:99px;padding:2px 7px;font-size:11px}}.main{{margin-left:235px;padding:24px;max-width:1500px}}.cards{{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}}.card,.panel{{background:#fff;border-radius:15px;padding:18px;box-shadow:0 3px 15px #17203312;margin-top:16px}}.big{{font-size:25px;font-weight:800}}.muted{{color:#6d7787;font-size:13px}}.btn,button{{display:inline-block;padding:9px 13px;border:0;border-radius:9px;text-decoration:none;background:#e8eef5;color:#172033;cursor:pointer}}.primary{{background:#1f7a5a;color:#fff}}.danger{{background:#d83b3b;color:#fff}}.grid{{display:grid;grid-template-columns:1fr 1fr;gap:14px}}.field{{margin:12px 0}}.field label{{display:block;font-size:13px;margin-bottom:5px}}.field input,.field select{{width:100%;padding:10px;border:1px solid #d5dce6;border-radius:9px}}.table{{width:100%;border-collapse:collapse}}.table th,.table td{{padding:10px;border-bottom:1px solid #edf0f4;text-align:left}}.badge{{padding:5px 8px;border-radius:99px;font-size:12px}}.ok{{background:#dcfce7;color:#166534}}.bad{{background:#fee2e2;color:#991b1b}}.warn{{background:#fef3c7;color:#92400e}}.avatar{{width:85px;height:85px;object-fit:cover;border-radius:13px}}.notice{{padding:12px 14px;border-radius:10px;background:#eef6ff;margin:12px 0}}.upload-preview{{max-width:420px;width:100%;border-radius:12px;border:1px solid #e4e8ee}}.login{{min-height:100vh;display:grid;place-items:center;background:linear-gradient(135deg,#17324d,#287b63);padding:20px}}.box{{background:#fff;padding:28px;border-radius:18px;width:min(430px,94%);box-shadow:0 18px 50px #0004}}.logo{{width:min(210px,60vw);height:min(210px,60vw);object-fit:contain;margin:0 auto 12px;display:block}}.title{{font-size:22px;font-weight:800;color:#17324d;line-height:1.45;margin:8px 0 22px}}@media(max-width:800px){{.side{{width:72px;padding:10px 7px}}.brand{{margin:2px 0 18px;justify-content:center}}.brand-logo{{width:50px;height:50px}}.brand-name,.nav-label{{display:none}}.nav-link{{justify-content:center;padding:10px 4px;margin:6px 0}}.nav-badge{{position:absolute;margin:0 0 28px 32px}}.main{{margin-left:72px;padding:15px}}.cards{{grid-template-columns:1fr 1fr}}.grid{{grid-template-columns:1fr}}.table{{font-size:13px;display:block;overflow-x:auto;white-space:nowrap}}}}@media(max-width:480px){{.cards{{grid-template-columns:1fr}}}}
 </style></head><body><aside class="side"><div class="brand"><img class="brand-logo" src="/logo.jpg" alt="Logo"><span class="brand-name">{s["name"]}</span></div>{nav}</aside><main class="main"><h2>{title}</h2>{body}</main></body></html>'''
 
 
@@ -351,7 +351,7 @@ def view_member(member_id):
     if not m: return "Member not found", 404
     total = sum(float(x["amount"]) for x in deposits)
     photo = f'<img class="avatar" src="/uploads/{secure_filename(m["photo"])}">' if m["photo"] else ""
-    body = f'''<div class="panel">{photo}<p><b>Member ID:</b> {m["member_id"]}</p><p><b>নাম:</b> {m["name"]}</p><p><b>NID:</b> {m["nid"] or "—"}</p><p><b>মোবাইল:</b> {m["phone"] or "—"}</p><p><b>মোট জমা:</b> ৳{total:,.2f}</p><a class="btn" href="/members/{member_id}/edit">Edit</a> <a class="btn primary" href="/deposits/new/{member_id}">+ জমা</a></div><div class="panel"><h3>মাসিক জমা</h3><table class="table"><tr><th>মাস</th><th>পরিমাণ</th><th>তারিখ</th><th>Method</th></tr>{''.join(f'<tr><td>{x["month"]}</td><td>৳{float(x["amount"]):,.2f}</td><td>{x["date"]}</td><td>{x["method"]}</td></tr>' for x in deposits)}</table></div>'''
+    body = f'''<div class="panel">{photo}<p><b>Member ID:</b> {m["member_id"]}</p><p><b>নাম:</b> {m["name"]}</p><p><b>NID:</b> {m["nid"] or "—"}</p><p><b>মোবাইল:</b> {m["phone"] or "—"}</p><p><b>মোট জমা:</b> ৳{total:,.2f}</p><a class="btn" href="/members/{member_id}/edit">Edit</a> <a class="btn primary" href="/deposits/new/{member_id}">+ জমা</a> <form method="post" action="/members/{member_id}/toggle-status" style="display:inline" onsubmit="return confirm('সদস্যের Status পরিবর্তন করতে চান?')"><button class="btn" type="submit">{'Deactivate' if m["status"] == "Active" else 'Activate'}</button></form> <form method="post" action="/members/{member_id}/delete" style="display:inline" onsubmit="return confirm('সতর্কতা: সদস্যটি স্থায়ীভাবে মুছে ফেলবেন? তার পুরোনো জমার রেকর্ডও মুছে যাবে। এই কাজ Undo করা যাবে না।')"><button class="btn danger" type="submit">Delete</button></form></div><div class="panel"><h3>মাসিক জমা</h3><table class="table"><tr><th>মাস</th><th>পরিমাণ</th><th>তারিখ</th><th>Method</th></tr>{''.join(f'<tr><td>{x["month"]}</td><td>৳{float(x["amount"]):,.2f}</td><td>{x["date"]}</td><td>{x["method"]}</td></tr>' for x in deposits)}</table></div>'''
     return layout(body, m["name"])
 
 
@@ -375,6 +375,39 @@ def edit_member(member_id):
         c.execute("UPDATE users SET name=?,phone=?,nid=?,photo=?,password=?,status=?,joining=? WHERE id=?", (request.form["name"], request.form.get("phone", ""), request.form.get("nid", ""), photo, password, request.form["status"], request.form["joining"], member_id))
         c.commit(); c.close(); log_action("MEMBER_UPDATED", member["member_id"]); return redirect(f"/members/{member_id}")
     c.close(); return member_form(member)
+
+
+@app.route("/members/<int:member_id>/toggle-status", methods=["POST"])
+def toggle_member_status(member_id):
+    g = guard()
+    if g: return g
+    if not is_admin(): return "Forbidden", 403
+    c = db()
+    member = c.execute("SELECT * FROM users WHERE id=? AND role='member'", (member_id,)).fetchone()
+    if not member:
+        c.close(); return "Member not found", 404
+    new_status = "Inactive" if member["status"] == "Active" else "Active"
+    c.execute("UPDATE users SET status=? WHERE id=?", (new_status, member_id))
+    c.commit(); c.close()
+    log_action("MEMBER_STATUS_CHANGED", f'{member["member_id"]} -> {new_status}')
+    return redirect(f"/members/{member_id}")
+
+
+@app.route("/members/<int:member_id>/delete", methods=["POST"])
+def delete_member(member_id):
+    g = guard()
+    if g: return g
+    if not is_admin(): return "Forbidden", 403
+    c = db()
+    member = c.execute("SELECT * FROM users WHERE id=? AND role='member'", (member_id,)).fetchone()
+    if not member:
+        c.close(); return "Member not found", 404
+    # Keep payment-request history, but detach it from the deleted account.
+    c.execute("UPDATE payment_requests SET app_user_id=NULL, admin_user_id=admin_user_id WHERE app_user_id=?", (member_id,))
+    c.execute("DELETE FROM users WHERE id=? AND role='member'", (member_id,))
+    c.commit(); c.close()
+    log_action("MEMBER_DELETED", member["member_id"])
+    return redirect("/members")
 
 
 @app.route("/deposits/new/<int:member_id>", methods=["GET", "POST"])
@@ -417,10 +450,54 @@ def transactions():
     g = guard()
     if g: return g
     if not is_admin(): return "Forbidden", 403
-    c = db(); rows = c.execute("SELECT d.*,u.name FROM deposits d JOIN users u ON u.id=d.member_id ORDER BY d.id DESC").fetchall(); c.close()
-    html = '<div class="panel"><h3>মাসিক জমার লেনদেন</h3><table class="table"><tr><th>তারিখ</th><th>সদস্য</th><th>মাস</th><th>জমা</th><th>Method</th></tr>'
-    html += "".join(f'<tr><td>{x["date"]}</td><td>{x["name"]}</td><td>{x["month"]}</td><td>৳{float(x["amount"]):,.2f}</td><td>{x["method"]}</td></tr>' for x in rows)
-    return layout(html + '</table></div>', "লেনদেন")
+    c = db(); rows = c.execute("SELECT d.*,u.name,u.member_id AS member_code FROM deposits d JOIN users u ON u.id=d.member_id ORDER BY d.id DESC").fetchall(); c.close()
+    html = "<div class='panel'><h3>মাসিক জমার লেনদেন</h3><table class='table'><tr><th>ID</th><th>তারিখ</th><th>সদস্য</th><th>মাস</th><th>জমা</th><th>Method</th><th>Note</th><th>Action</th></tr>"
+    for x in rows:
+        html += "<tr><td>{}</td><td>{}</td><td>{}<br><span class='muted'>{}</span></td><td>{}</td><td>৳{:,.2f}</td><td>{}</td><td>{}</td><td><a class='btn' href='/transactions/{}/edit'>Edit</a> <form method='post' action='/transactions/{}/delete' style='display:inline'><button class='btn danger' type='submit'>Delete</button></form></td></tr>".format(x["id"],x["date"],x["name"],x["member_code"],x["month"],float(x["amount"]),x["method"],x["note"] or "—",x["id"],x["id"])
+    return layout(html + "</table></div>", "লেনদেন")
+
+
+def transaction_form(tx):
+    methods = ["Cash", "Bank", "bKash", "Mobile Banking"]
+    options = ''.join("<option selected>"+m+"</option>" if tx["method"] == m else "<option>"+m+"</option>" for m in methods)
+    body = "<form class='panel' method='post'><div class='grid'><div class='field'><label>মাস</label><input name='month' type='month' value='{}' required></div><div class='field'><label>পরিমাণ</label><input name='amount' type='number' min='0.01' step='0.01' value='{:.2f}' required></div><div class='field'><label>তারিখ</label><input name='date' type='date' value='{}' required></div><div class='field'><label>Method</label><select name='method'>{}</select></div></div><div class='field'><label>Note</label><input name='note' value='{}'></div><button class='btn primary'>Save Changes</button> <a class='btn' href='/transactions'>Cancel</a></form>".format(str(tx["month"])[:7],float(tx["amount"]),tx["date"],options,tx["note"] or "")
+    return layout(body, "লেনদেন Edit")
+
+
+@app.route("/transactions/<int:tx_id>/edit", methods=["GET", "POST"])
+def edit_transaction(tx_id):
+    g = guard()
+    if g: return g
+    if not is_admin(): return "Forbidden", 403
+    c = db(); tx = c.execute("SELECT d.*,u.name,u.member_id AS member_code FROM deposits d JOIN users u ON u.id=d.member_id WHERE d.id=?", (tx_id,)).fetchone()
+    if not tx:
+        c.close(); return "Transaction not found", 404
+    if request.method == "POST":
+        try: amount = float(request.form.get("amount", "0"))
+        except ValueError:
+            c.close(); return "Invalid amount", 400
+        month = request.form.get("month", "").strip(); tx_date = request.form.get("date", "").strip(); method = request.form.get("method", "").strip(); note = request.form.get("note", "").strip()
+        if amount <= 0 or len(month) != 7 or not tx_date:
+            c.close(); return "মাস, তারিখ ও সঠিক পরিমাণ আবশ্যক।", 400
+        old = "month={}; amount={}; date={}; method={}; note={}".format(tx["month"],tx["amount"],tx["date"],tx["method"],tx["note"] or "")
+        c.execute("UPDATE deposits SET month=?,amount=?,date=?,method=?,note=? WHERE id=?", (month, amount, tx_date, method, note, tx_id)); c.commit(); c.close()
+        new = "month={}; amount={}; date={}; method={}; note={}".format(month,amount,tx_date,method,note)
+        log_action("TRANSACTION_EDITED", "{} / transaction #{} / OLD [{}] / NEW [{}]".format(tx["member_code"],tx_id,old,new))
+        return redirect("/transactions")
+    c.close(); return transaction_form(tx)
+
+
+@app.route("/transactions/<int:tx_id>/delete", methods=["POST"])
+def delete_transaction(tx_id):
+    g = guard()
+    if g: return g
+    if not is_admin(): return "Forbidden", 403
+    c = db(); tx = c.execute("SELECT d.*,u.name,u.member_id AS member_code FROM deposits d JOIN users u ON u.id=d.member_id WHERE d.id=?", (tx_id,)).fetchone()
+    if not tx:
+        c.close(); return "Transaction not found", 404
+    target = "{} / transaction #{} / month={} / amount={} / date={} / method={} / note={}".format(tx["member_code"],tx_id,tx["month"],tx["amount"],tx["date"],tx["method"],tx["note"] or "")
+    c.execute("DELETE FROM deposits WHERE id=?", (tx_id,)); c.commit(); c.close(); log_action("TRANSACTION_DELETED", target)
+    return redirect("/transactions")
 
 
 @app.route("/reports")
